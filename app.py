@@ -58,3 +58,12 @@ if st.button("Generate Graph"):
 
     # Display predicted stock price
     st.write(f"### Predicted Stock Price: **{predicted_price:.2f}**")
+
+
+
+
+
+
+
+#https://stock-graph.streamlit.app/
+
