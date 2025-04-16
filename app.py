@@ -1,65 +1,67 @@
-
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 
-# --- Function to calculate Market Index based on parameters ---
+st.set_page_config(page_title="Market Index Line Graph", layout="centered")
+
+# Title
+st.title("📈 Dynamic Market Index Line Graph")
+st.write("Adjust the parameters below and click 'Add Point' to track how the Market Index changes over time.")
+
+# Function to calculate market index
 def calculate_market_index(interest_rate, inflation_rate, gdp_growth):
-    # Define weight factors
-    interest_impact = -1.5
-    inflation_impact = -1.2
-    gdp_impact = 2.0
+    # Define weight factors for impact
+    interest_impact = -1.5  # Higher interest rate lowers index
+    inflation_impact = -1.2  # Higher inflation lowers index
+    gdp_impact = 2.0         # Higher GDP raises index
     
-    # Linear formula for market index
+    # Market index formula
     market_index = 100 + (interest_impact * interest_rate) + (inflation_impact * inflation_rate) + (gdp_impact * gdp_growth)
-    return max(50, min(market_index, 200))  # Clamp value between 50 and 200
+    
+    # Clamp market index in range
+    return max(50, min(market_index, 200))
 
-# --- Streamlit UI ---
-st.set_page_config(page_title="Market Index Simulation", layout="centered")
-st.title("Market Index Simulator")
-st.markdown("Use the sliders to simulate how **Interest Rate**, **Inflation**, and **GDP Growth** affect the Market Index.")
+# Initialize session state to store data points
+if "index_history" not in st.session_state:
+    st.session_state.index_history = []
+    st.session_state.step_count = 0
 
-# --- Sliders ---
-interest_rate = st.slider("Interest Rate (%)", 0.0, 15.0, 5.0, 0.1)
-inflation_rate = st.slider("Inflation Rate (%)", 0.0, 15.0, 5.0, 0.1)
-gdp_growth = st.slider("GDP Growth Rate (%)", -5.0, 10.0, 2.0, 0.1)
+# Sliders
+col1, col2, col3 = st.columns(3)
+with col1:
+    interest_rate = st.slider("Interest Rate (%)", 0.0, 15.0, 5.0, 0.1)
+with col2:
+    inflation_rate = st.slider("Inflation Rate (%)", 0.0, 15.0, 5.0, 0.1)
+with col3:
+    gdp_growth = st.slider("GDP Growth Rate (%)", -5.0, 10.0, 2.0, 0.1)
 
-# --- Button to generate updated graphs ---
-if st.button("Generate Graph"):
-    market_index = calculate_market_index(interest_rate, inflation_rate, gdp_growth)
-    st.subheader(f"Predicted Market Index: {market_index:.2f}")
+# Button to add a new prediction point
+if st.button("➕ Add Point"):
+    new_index = calculate_market_index(interest_rate, inflation_rate, gdp_growth)
+    st.session_state.index_history.append(new_index)
+    st.session_state.step_count += 1
 
-    # --- Graph 1: Scatter plot with red dot ---
-    np.random.seed(42)
-    actual_values = np.random.uniform(100, 200, 100)
-    noise = np.random.normal(0, 5, size=100)
-    predicted_values = actual_values + noise
+# Button to reset the graph
+if st.button("🔄 Reset Graph"):
+    st.session_state.index_history = []
+    st.session_state.step_count = 0
 
-    fig1, ax1 = plt.subplots(figsize=(5, 4))
-    ax1.scatter(actual_values, predicted_values, label="Sample Predictions", alpha=0.6)
-    ax1.plot([100, 200], [100, 200], linestyle='--', color='blue', label='Perfect Fit')
-    ax1.scatter(market_index, market_index, color='red', label="Your Prediction", s=100)
-    ax1.set_xlabel("Actual Stock Price")
-    ax1.set_ylabel("Predicted Stock Price")
-    ax1.set_title("Prediction Comparison")
-    ax1.legend()
-    st.pyplot(fig1)
+# Plot the line graph
+if st.session_state.index_history:
+    fig, ax = plt.subplots(figsize=(8, 5))
+    x_vals = list(range(1, len(st.session_state.index_history) + 1))
+    y_vals = st.session_state.index_history
 
-    # --- Graph 2: Parameter Sensitivity Line Graph ---
-    x_vals = np.linspace(0, 15, 100)
-    gdp_vals = np.linspace(-5, 10, 100)
-
-    interest_line = [calculate_market_index(x, inflation_rate, gdp_growth) for x in x_vals]
-    inflation_line = [calculate_market_index(interest_rate, x, gdp_growth) for x in x_vals]
-    gdp_line = [calculate_market_index(interest_rate, inflation_rate, x) for x in gdp_vals]
-
-    fig2, ax2 = plt.subplots(figsize=(6, 4))
-    ax2.plot(x_vals, interest_line, label="Interest Rate Impact", color='orange')
-    ax2.plot(x_vals, inflation_line, label="Inflation Rate Impact", color='green')
-    ax2.plot(gdp_vals, gdp_line, label="GDP Growth Impact", color='purple')
-    ax2.set_ylim(50, 200)
-    ax2.set_ylabel("Market Index")
-    ax2.set_xlabel("Parameter Value")
-    ax2.set_title("Impact of Each Parameter on Market Index")
-    ax2.legend()
-    st.pyplot(fig2)
+    ax.plot(x_vals, y_vals, marker='o', linestyle='-', color='blue', label="Market Index")
+    ax.scatter(x_vals[-1], y_vals[-1], color='red', s=100, zorder=5, label="Latest Point")  # Red dot at the latest point
+    ax.set_title("Market Index Trend")
+    ax.set_xlabel("Prediction Step")
+    ax.set_ylabel("Market Index")
+    ax.set_ylim(50, 200)
+    ax.grid(True)
+    ax.legend()
+    st.pyplot(fig)
+    
+    st.write(f"### 📍 Latest Predicted Market Index: {y_vals[-1]:.2f}")
+else:
+    st.info("Use the sliders and click 'Add Point' to start plotting the Market Index trend.")
