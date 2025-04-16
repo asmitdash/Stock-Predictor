@@ -65,3 +65,10 @@ if st.session_state.index_history:
     st.write(f"### 📍 Latest Predicted Market Index: {y_vals[-1]:.2f}")
 else:
     st.info("Use the sliders and click 'Add Point' to start plotting the Market Index trend.")
+
+
+
+
+
+
+#https://stock-graph.streamlit.app/
