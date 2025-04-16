@@ -12,62 +12,54 @@ def calculate_market_index(interest_rate, inflation_rate, gdp_growth):
     
     # Linear formula for market index
     market_index = 100 + (interest_impact * interest_rate) + (inflation_impact * inflation_rate) + (gdp_impact * gdp_growth)
-    return max(50, min(market_index, 200))  # Limit values to a reasonable range
+    return max(50, min(market_index, 200))  # Clamp value between 50 and 200
 
-# --- Streamlit Interface ---
-st.set_page_config(page_title="Market Index Simulator", layout="centered")
-st.title("Dynamic Market Index Prediction")
-st.markdown("Adjust the sliders to simulate how changes in **Interest Rate**, **Inflation**, and **GDP Growth** affect the Market Index.")
+# --- Streamlit UI ---
+st.set_page_config(page_title="Market Index Simulation", layout="centered")
+st.title("Market Index Simulator")
+st.markdown("Use the sliders to simulate how **Interest Rate**, **Inflation**, and **GDP Growth** affect the Market Index.")
 
-# --- Sliders for user input ---
+# --- Sliders ---
 interest_rate = st.slider("Interest Rate (%)", 0.0, 15.0, 5.0, 0.1)
 inflation_rate = st.slider("Inflation Rate (%)", 0.0, 15.0, 5.0, 0.1)
 gdp_growth = st.slider("GDP Growth Rate (%)", -5.0, 10.0, 2.0, 0.1)
 
-# --- Button to generate graphs ---
+# --- Button to generate updated graphs ---
 if st.button("Generate Graph"):
-    # 1. Calculate Market Index
     market_index = calculate_market_index(interest_rate, inflation_rate, gdp_growth)
     st.subheader(f"Predicted Market Index: {market_index:.2f}")
 
-    # 2. Bar Graph of Market Index
-    fig1, ax1 = plt.subplots(figsize=(5, 3))
-    ax1.bar(["Market Index"], [market_index], color='skyblue')
-    ax1.set_ylim(50, 200)
-    ax1.set_ylabel("Market Index Value")
-    ax1.set_title("Market Index Based on Economic Indicators")
-    st.pyplot(fig1)
-
-    # 3. Scatter Plot (Random samples with current prediction)
+    # --- Graph 1: Scatter plot with red dot ---
     np.random.seed(42)
     actual_values = np.random.uniform(100, 200, 100)
     noise = np.random.normal(0, 5, size=100)
     predicted_values = actual_values + noise
 
-    fig2, ax2 = plt.subplots(figsize=(5, 4))
-    ax2.scatter(actual_values, predicted_values, label="Sample Predictions", alpha=0.6)
-    ax2.plot([100, 200], [100, 200], linestyle='--', color='blue', label='Perfect Fit')
-    ax2.scatter(market_index, market_index, color='red', label="Current Prediction", s=100)
-    ax2.set_xlabel("Actual Stock Price")
-    ax2.set_ylabel("Predicted Stock Price")
-    ax2.set_title("Prediction Comparison")
-    ax2.legend()
-    st.pyplot(fig2)
+    fig1, ax1 = plt.subplots(figsize=(5, 4))
+    ax1.scatter(actual_values, predicted_values, label="Sample Predictions", alpha=0.6)
+    ax1.plot([100, 200], [100, 200], linestyle='--', color='blue', label='Perfect Fit')
+    ax1.scatter(market_index, market_index, color='red', label="Your Prediction", s=100)
+    ax1.set_xlabel("Actual Stock Price")
+    ax1.set_ylabel("Predicted Stock Price")
+    ax1.set_title("Prediction Comparison")
+    ax1.legend()
+    st.pyplot(fig1)
 
-    # 4. Line Graph for parameter sensitivity
-    fig3, ax3 = plt.subplots(figsize=(6, 4))
+    # --- Graph 2: Parameter Sensitivity Line Graph ---
     x_vals = np.linspace(0, 15, 100)
+    gdp_vals = np.linspace(-5, 10, 100)
 
     interest_line = [calculate_market_index(x, inflation_rate, gdp_growth) for x in x_vals]
     inflation_line = [calculate_market_index(interest_rate, x, gdp_growth) for x in x_vals]
-    gdp_line = [calculate_market_index(interest_rate, inflation_rate, x) for x in np.linspace(-5, 10, 100)]
+    gdp_line = [calculate_market_index(interest_rate, inflation_rate, x) for x in gdp_vals]
 
-    ax3.plot(x_vals, interest_line, label="Interest Rate Impact", color='orange')
-    ax3.plot(x_vals, inflation_line, label="Inflation Rate Impact", color='green')
-    ax3.plot(np.linspace(-5, 10, 100), gdp_line, label="GDP Growth Impact", color='purple')
-    ax3.set_ylim(50, 200)
-    ax3.set_ylabel("Market Index")
-    ax3.set_xlabel("Parameter Value")
-    ax3.set_title("Parameter-wise Sensitivity on Market Index")
-    ax3.legend()
-    st.pyplot(fig3)
+    fig2, ax2 = plt.subplots(figsize=(6, 4))
+    ax2.plot(x_vals, interest_line, label="Interest Rate Impact", color='orange')
+    ax2.plot(x_vals, inflation_line, label="Inflation Rate Impact", color='green')
+    ax2.plot(gdp_vals, gdp_line, label="GDP Growth Impact", color='purple')
+    ax2.set_ylim(50, 200)
+    ax2.set_ylabel("Market Index")
+    ax2.set_xlabel("Parameter Value")
+    ax2.set_title("Impact of Each Parameter on Market Index")
+    ax2.legend()
+    st.pyplot(fig2)
